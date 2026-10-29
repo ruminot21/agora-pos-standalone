@@ -1,0 +1,10 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {toMinor,fromMinor,calcCart,paymentBreakdown,money,localDayKey} from '../src/domain.mjs';
+test('CLP se registra sin decimales',()=>{assert.equal(toMinor('12990','CLP'),12990);assert.equal(fromMinor(12990,'CLP'),'12990');});
+test('USD en centavos para evitar errores monetarios',()=>{assert.equal(toMinor('12.39','USD'),1239);assert.equal(fromMinor(1239,'USD'),'12.39');});
+test('subtotal, descuento y total',()=>{assert.deepEqual(calcCart([{price:1000,quantity:2},{price:350,quantity:1}],10),{subtotal:2350,discount:235,total:2115});});
+test('rechaza cantidades inválidas y descuentos mayores a 100%',()=>{assert.throws(()=>calcCart([{price:100,quantity:0}]));assert.throws(()=>calcCart([{price:100,quantity:1}],105));});
+test('efectivo devuelve vuelto y efectivo neto',()=>{assert.deepEqual(paymentBreakdown('efectivo',1700,{cash:2000}),{cash:1700,card:0,transfer:0,change:300,received:2000});});
+test('mixto debe cuadrar',()=>{assert.deepEqual(paymentBreakdown('mixto',1200,{cash:200,card:500,transfer:500}),{cash:200,card:500,transfer:500,change:0,received:1200});assert.throws(()=>paymentBreakdown('mixto',1200,{cash:200,card:600,transfer:500}));});
+test('fecha local conserva año mes día',()=>{assert.match(localDayKey(new Date(2026,9,29)),/^2026-10-29$/);});
+test('precios negativos rechazados',()=>{assert.throws(()=>toMinor('-1'));assert.throws(()=>toMinor('no'));});
